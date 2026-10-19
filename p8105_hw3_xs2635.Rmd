@@ -339,4 +339,40 @@ ggplot(
   ) +
   theme(legend.position = "bottom")
 ```
+
+## Activity over the course of the day
+
+```{r, fig.width=10, fig.height=5}
+nhanes_time =
+  nhanes |>
+  group_by(education, sex, minute, hour) |>
+  summarize(
+    mean_mims = mean(mims),
+    .groups = "drop"
+  )
+
+ggplot(
+  nhanes_time,
+  aes(x = hour, y = mean_mims, color = sex)
+) +
+  geom_line(alpha = 0.3) +
+  geom_smooth(se = FALSE, span = 0.15) +
+  facet_wrap(~ education, nrow = 1) +
+  scale_color_manual(
+    values = c("Male" = "#0072B2", "Female" = "#D55E00")
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 6, 12, 18, 24),
+    limits = c(0, 24)
+  ) +
+  labs(
+    title = "Daily activity patterns by education and sex",
+    x = "Hour of day",
+    y = "Mean minute-level MIMS",
+    color = "Sex"
+  ) +
+  theme(legend.position = "bottom")
+```
+
+
 # Problem 3
