@@ -1,0 +1,27 @@
+---
+title: "P8105 Homework 3"
+author: "Xiaobo Shen"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 5
+)
+
+library(tidyverse)
+library(p8105.datasets)
+library(patchwork)
+
+theme_set(theme_minimal(base_size = 12))
+```
+
+# Problem 1
+
+# Problem 2
+
+# Problem 3
