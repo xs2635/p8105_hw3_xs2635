@@ -374,5 +374,10 @@ ggplot(
   theme(legend.position = "bottom")
 ```
 
+All education and sex groups show a clear daily pattern: mean activity is lowest around 4–5 a.m., rises sharply in the morning, remains elevated during the day, and declines in the evening.
+
+In the less than high school group, activity peaks in the late morning and then gradually decreases, with broadly similar daytime patterns for men and women. In the high school equivalent group, women generally have higher mean activity during the morning and early afternoon. The more than high school group shows a more sustained daytime plateau among women, whose activity exceeds men's through most daytime hours.
+
+These are descriptive group averages. Differences across education groups may partly reflect their different age distributions, and the curves do not imply that every participant follows the same daily pattern.
 
 # Problem 3
