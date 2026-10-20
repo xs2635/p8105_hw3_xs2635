@@ -381,3 +381,176 @@ In the less than high school group, activity peaks in the late morning and then 
 These are descriptive group averages. Differences across education groups may partly reflect their different age distributions, and the curves do not imply that every participant follows the same daily pattern.
 
 # Problem 3
+
+## Import and clean the data
+
+```{r}
+jan_2020 =
+  read_csv(
+    "data/citibike/Jan 2020 Citi.csv",
+    show_col_types = FALSE
+  ) |>
+  mutate(year = 2020, month = "January")
+
+july_2020 =
+  read_csv(
+    "data/citibike/July 2020 Citi.csv",
+    show_col_types = FALSE
+  ) |>
+  mutate(year = 2020, month = "July")
+
+jan_2024 =
+  read_csv(
+    "data/citibike/Jan 2024 Citi.csv",
+    show_col_types = FALSE
+  ) |>
+  mutate(year = 2024, month = "January")
+
+july_2024 =
+  read_csv(
+    "data/citibike/July 2024 Citi.csv",
+    show_col_types = FALSE
+  ) |>
+  mutate(year = 2024, month = "July")
+
+citibike =
+  bind_rows(jan_2020, july_2020, jan_2024, july_2024) |>
+  mutate(
+    year = factor(year),
+    month = factor(month, levels = c("January", "July")),
+    weekdays = factor(
+      weekdays,
+      levels = c(
+        "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday", "Saturday", "Sunday"
+      )
+    ),
+    member_casual = factor(
+      member_casual,
+      levels = c("casual", "member"),
+      labels = c("Casual", "Member")
+    ),
+    rideable_type = factor(
+      rideable_type,
+      levels = c("classic_bike", "electric_bike"),
+      labels = c("Classic", "Electric")
+    )
+  )
+
+citibike |>
+  count(year, month) |>
+  knitr::kable(
+    col.names = c("Year", "Month", "Number of rides")
+  )
+```
+
+The combined dataset contains 99,485 rides and 9 variables, with each row representing one ride. It includes the ride ID, bike type, day of the week, duration in minutes, starting and ending station names, membership status, year, and month. The data cover January and July in 2020 and 2024 and represent a 1% sample of rides lasting less than four hours.
+
+Year and month were added before combining the four files. Categorical variables were converted to factors, with months and weekdays placed in chronological order. There are 43 missing starting station names and 207 missing ending station names. These rides are retained for analyses that do not require station names.
+
+## Ride counts by membership status
+
+```{r}
+citibike |>
+  count(year, month, member_casual) |>
+  pivot_wider(
+    names_from = member_casual,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  mutate(Total = Casual + Member) |>
+  knitr::kable(
+    col.names = c("Year", "Month", "Casual", "Member", "Total"),
+    caption = "Sampled rides by year, month, and membership status"
+  )
+```
+
+Members account for most sampled rides in all four periods. Both membership groups have more rides in July than in January in each year, and more rides in 2024 than in the corresponding month of 2020. July 2024 has the largest number of sampled rides. Casual riders also represent a larger share of rides in July than in January in both years.
+
+## Most popular starting stations in July 2024
+
+```{r}
+citibike |>
+  filter(
+    year == "2024",
+    month == "July",
+    !is.na(start_station_name)
+  ) |>
+  count(start_station_name, sort = TRUE) |>
+  slice_head(n = 5) |>
+  knitr::kable(
+    col.names = c("Starting station", "Number of rides"),
+    caption = "Five most popular starting stations in July 2024"
+  )
+```
+
+Pier 61 at Chelsea Piers is the most popular starting station in the July 2024 sample, with 163 rides, followed by University Pl & E 14 St with 155 rides. These rankings describe the sampled rides and may differ from rankings based on all rides.
+
+## Median ride duration by weekday, month, and year
+
+```{r, fig.width=10, fig.height=5}
+citibike_median =
+  citibike |>
+  group_by(year, month, weekdays) |>
+  summarize(
+    median_duration = median(duration),
+    .groups = "drop"
+  )
+
+ggplot(
+  citibike_median,
+  aes(
+    x = weekdays,
+    y = median_duration,
+    color = month,
+    group = month
+  )
+) +
+  geom_line() +
+  geom_point(size = 2) +
+  facet_wrap(~ year, nrow = 1) +
+  labs(
+    title = "Median ride duration by weekday, month, and year",
+    x = "Day of the week",
+    y = "Median ride duration (minutes)",
+    color = "Month"
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+Median ride duration is higher in July than in January on every weekday in both years. Durations are also consistently lower in 2024 than in the corresponding month of 2020, with a particularly large difference in July.
+
+In July 2020, median duration rises from approximately 13–14 minutes on weekdays to about 16.5 minutes on weekends. July 2024 also shows longer weekend rides, but the increase is smaller. January 2024 has relatively little weekday variation, with no consistent weekend increase. These are descriptive associations and do not establish causal effects.
+
+## Ride duration distributions in 2024
+
+```{r, fig.width=10, fig.height=7}
+citibike |>
+  filter(year == "2024") |>
+  ggplot(
+    aes(
+      x = member_casual,
+      y = duration,
+      fill = rideable_type
+    )
+  ) +
+  geom_boxplot(outlier.alpha = 0.15, outlier.size = 0.5) +
+  facet_grid(month ~ rideable_type) +
+  scale_y_sqrt(
+    breaks = c(1, 5, 10, 20, 40, 80, 160, 240)
+  ) +
+  labs(
+    title = "Ride duration distributions in 2024",
+    x = "Membership status",
+    y = "Ride duration (minutes; square-root scale)",
+    caption = "All observations are retained."
+  ) +
+  theme(legend.position = "none")
+```
+
+Ride durations are right-skewed in all groups, with many short rides and a small number of much longer rides. Casual riders generally have higher median durations and wider interquartile ranges than members within each month and bike type.
+
+July generally has longer typical durations than January. Among casual riders, classic-bike rides have higher medians and greater variability than electric-bike rides. Differences between bike types are smaller among members. These comparisons describe associations and do not establish that bike type or membership causes differences in duration.
